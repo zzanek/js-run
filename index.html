@@ -29,7 +29,7 @@
 </div>
 
 <div>
-    <h2></h2>
+    <h2>Output</h2>
     <div id="output"></div>
 </div>
 
@@ -44,16 +44,21 @@ function runCode() {
             try {
                 eval(fixSyntaxError(code));
             } catch (fixedError) {
-                document.getElementById("output").innerText = "Error: " + fixedError.message;
+                logError("Error: " + fixedError.message);
             }
         } else {
-            document.getElementById("output").innerText = "Error: " + error.message;
+            logError("Error: " + error.message);
         }
     }
 }
 
 function fixSyntaxError(code) {
     return code.replace(/[\[\]\(\)\{\};,]/g, ' ');
+}
+
+function logError(message) {
+    console.error(message);
+    document.getElementById("output").innerText = message;
 }
 </script>
 
