@@ -1,66 +1,101 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>JavaScript/Bookmarklet Runner</title>
-<style>
-    body {
-        font-family: Arial, sans-serif;
-        margin: 0;
-        padding: 20px;
-    }
-    textarea {
-        width: 100%;
-        height: 200px;
-    }
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Code Runner</title>
+    <!-- Import CodeMirror CSS -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/codemirror.min.css">
+    <!-- Theme for CodeMirror -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/theme/monokai.min.css">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            background-color: #282c34;
+            color: white;
+            margin: 0;
+            padding: 20px;
+            height: 100vh;
+        }
+        h1 {
+            color: #61dafb;
+        }
+        #editor {
+            width: 80%;
+            height: 300px;
+            border: 1px solid #ccc;
+            margin-bottom: 10px;
+        }
+        #run-button {
+            background-color: #61dafb;
+            border: none;
+            padding: 10px 20px;
+            color: #282c34;
+            font-size: 16px;
+            cursor: pointer;
+        }
+        #console {
+            width: 80%;
+            height: 200px;
+            background-color: #1e1e1e;
+            color: #00ff00;
+            padding: 10px;
+            border-radius: 5px;
+            overflow-y: auto;
+            margin-top: 20px;
+            white-space: pre-wrap;
+        }
+    </style>
 </head>
 <body>
+    <h1>Code Runner</h1>
+    <textarea id="editor"></textarea>
+    <button id="run-button">Run Code</button>
+    <div id="console"></div>
 
-<h1>JavaScript/Bookmarklet Runner</h1>
+    <!-- Import CodeMirror JS -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/codemirror.min.js"></script>
+    <!-- Import Python Mode for CodeMirror -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/mode/python/python.min.js"></script>
 
-<div>
-    <textarea id="codeInput" placeholder="Paste your JavaScript code or bookmarklet here"></textarea>
-</div>
+    <script>
+        // Initialize the CodeMirror editor
+        const editor = CodeMirror.fromTextArea(document.getElementById('editor'), {
+            mode: 'python',
+            theme: 'monokai',
+            lineNumbers: true,
+            indentUnit: 4,
+        });
 
-<div>
-    <button onclick="runCode()">Run Code</button>
-</div>
+        // Run Code Button Click Event
+        document.getElementById('run-button').addEventListener('click', function() {
+            const code = editor.getValue();
+            runPythonCode(code);
+        });
 
-<div>
-    <h2>Output</h2>
-    <div id="output"></div>
-</div>
-
-<script>
-function runCode() {
-    var code = document.getElementById("codeInput").value;
-    try {
-        var result = eval(code);
-        document.getElementById("output").innerText = result;
-    } catch (error) {
-        if (error instanceof SyntaxError) {
+        // Mock function to run Python code
+        function runPythonCode(code) {
+            // Simulate running the code (Replace this with actual server-side code execution logic)
+            let output;
             try {
-                eval(fixSyntaxError(code));
-            } catch (fixedError) {
-                logError("Error: " + fixedError.message);
+                // Dummy logic to simulate code output
+                if (code.includes('print')) {
+                    output = code.split('print(')[1].split(')')[0]; // Very basic mock parsing
+                } else if (code.includes('2 + 2')) {
+                    output = '4';
+                } else {
+                    output = 'Command not recognized.';
+                }
+            } catch (err) {
+                output = `Error: ${err.message}`;
             }
-        } else {
-            logError("Error: " + error.message);
+
+            // Display output in the console
+            document.getElementById('console').innerText = `Output:\n${output}`;
         }
-    }
-}
-
-function fixSyntaxError(code) {
-    return code.replace(/[\[\]\(\)\{\};,]/g, ' ');
-}
-
-function logError(message) {
-    console.error(message);
-    document.getElementById("output").innerText = message;
-}
-</script>
-
+    </script>
 </body>
 </html>
