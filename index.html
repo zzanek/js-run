@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>In-Browser Code Runner</title>
+    <title>Replit-like Code Editor</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/codemirror.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/theme/monokai.min.css">
     <style>
@@ -81,7 +81,7 @@
     </style>
 </head>
 <body>
-    <h1>In-Browser Code Runner</h1>
+    <h1>Replit-like Code Editor</h1>
 
     <!-- File Manager -->
     <div id="file-manager">
@@ -103,18 +103,19 @@
     <!-- Console -->
     <div id="console"></div>
 
-    <!-- CodeMirror JavaScript -->
+    <!-- External Libraries -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/codemirror.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/mode/python/python.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/mode/javascript/javascript.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/mode/xml/xml.min.js"></script>
+    <script src="https://skulpt.org/static/skulpt.min.js"></script> <!-- Python interpreter -->
 
     <script>
-        // In-memory file storage
-        let files = {};
+        // In-memory file storage, or use localStorage for persistence
+        let files = JSON.parse(localStorage.getItem('files')) || {};
         let currentFile = null;
 
-        // Initialize the CodeMirror editor
+        // Initialize CodeMirror editor
         const editor = CodeMirror.fromTextArea(document.getElementById('editor'), {
             mode: 'javascript',
             theme: 'monokai',
@@ -122,7 +123,7 @@
             indentUnit: 4,
         });
 
-        // Function to create a new file
+        // Create a new file
         function createFile(fileName) {
             if (files[fileName]) {
                 alert('File already exists!');
@@ -130,9 +131,10 @@
             }
             files[fileName] = '';
             updateFileList();
+            saveToLocalStorage();
         }
 
-        // Function to update the file list
+        // Update file list in UI
         function updateFileList() {
             const fileList = document.getElementById('files');
             fileList.innerHTML = '';
@@ -144,7 +146,7 @@
             }
         }
 
-        // Function to open a file
+        // Open a file in the editor
         function openFile(fileName) {
             currentFile = fileName;
             editor.setValue(files[fileName]);
@@ -152,17 +154,18 @@
             setEditorMode(ext);
         }
 
-        // Function to delete a file
+        // Delete a file
         function deleteFile(fileName) {
             if (confirm('Are you sure you want to delete ' + fileName + '?')) {
                 delete files[fileName];
                 currentFile = null;
                 editor.setValue('');
                 updateFileList();
+                saveToLocalStorage();
             }
         }
 
-        // Function to run the code
+        // Run the code
         function runCode() {
             if (!currentFile) {
                 alert('Please select a file to run.');
@@ -170,12 +173,21 @@
             }
             const code = editor.getValue();
             files[currentFile] = code;
+            saveToLocalStorage();
 
-            // Mock execution for JavaScript
+            // Handle JavaScript execution
             if (currentFile.endsWith('.js')) {
                 try {
                     const output = eval(code);
                     document.getElementById('console').innerText = `Output:\n${output || 'No output'}`;
+                } catch (err) {
+                    document.getElementById('console').innerText = `Error:\n${err.message}`;
+                }
+            }
+            // Handle Python execution using Skulpt
+            else if (currentFile.endsWith('.py')) {
+                try {
+                    Sk.importMainWithBody("<stdin>", false, code);
                 } catch (err) {
                     document.getElementById('console').innerText = `Error:\n${err.message}`;
                 }
@@ -184,12 +196,15 @@
             }
         }
 
-        // Set the editor mode based on file extension
+        // Set editor mode based on file extension
         function setEditorMode(ext) {
             let mode;
             switch (ext) {
                 case 'js':
                     mode = 'javascript';
+                    break;
+                case 'py':
+                    mode = 'python';
                     break;
                 case 'html':
                     mode = 'xml';
@@ -200,7 +215,12 @@
             editor.setOption('mode', mode);
         }
 
-        // Event Listeners
+        // Save files to localStorage
+        function saveToLocalStorage() {
+            localStorage.setItem('files', JSON.stringify(files));
+        }
+
+        // Event listeners
         document.getElementById('create-file-button').addEventListener('click', () => {
             const fileName = document.getElementById('new-file-name').value;
             if (fileName) {
@@ -220,6 +240,9 @@
         });
 
         document.getElementById('run-button').addEventListener('click', runCode);
+
+        // Initialize the file list
+        updateFileList();
     </script>
 </body>
 </html>
