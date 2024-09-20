@@ -3,8 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Multi-File Code Runner</title>
-    <!-- CodeMirror CSS -->
+    <title>In-Browser Code Runner</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/codemirror.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/theme/monokai.min.css">
     <style>
@@ -82,7 +81,7 @@
     </style>
 </head>
 <body>
-    <h1>Multi-File Code Runner</h1>
+    <h1>In-Browser Code Runner</h1>
 
     <!-- File Manager -->
     <div id="file-manager">
@@ -95,7 +94,7 @@
 
     <!-- Control Buttons -->
     <div id="controls">
-        <input type="text" id="new-file-name" placeholder="New file name (e.g., run.py)">
+        <input type="text" id="new-file-name" placeholder="New file name (e.g., script.js)">
         <button id="create-file-button">Create File</button>
         <button id="delete-file-button">Delete File</button>
         <button id="run-button">Run Code</button>
@@ -109,17 +108,15 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/mode/python/python.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/mode/javascript/javascript.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/mode/xml/xml.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/mode/css/css.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/mode/markdown/markdown.min.js"></script>
 
     <script>
-        // File management system
+        // In-memory file storage
         let files = {};
         let currentFile = null;
 
         // Initialize the CodeMirror editor
         const editor = CodeMirror.fromTextArea(document.getElementById('editor'), {
-            mode: 'python',
+            mode: 'javascript',
             theme: 'monokai',
             lineNumbers: true,
             indentUnit: 4,
@@ -165,7 +162,7 @@
             }
         }
 
-        // Function to run the code (currently mocks execution)
+        // Function to run the code
         function runCode() {
             if (!currentFile) {
                 alert('Please select a file to run.');
@@ -174,37 +171,28 @@
             const code = editor.getValue();
             files[currentFile] = code;
 
-            // Mock execution (replace this with actual server-side code execution)
-            let output;
-            if (currentFile.endsWith('.py')) {
-                output = `Running Python code from ${currentFile}:\n` + code;
-            } else if (currentFile.endsWith('.js')) {
-                output = `Running JavaScript code from ${currentFile}:\n` + code;
+            // Mock execution for JavaScript
+            if (currentFile.endsWith('.js')) {
+                try {
+                    const output = eval(code);
+                    document.getElementById('console').innerText = `Output:\n${output || 'No output'}`;
+                } catch (err) {
+                    document.getElementById('console').innerText = `Error:\n${err.message}`;
+                }
             } else {
-                output = `Cannot run files with the extension .${currentFile.split('.').pop()}`;
+                document.getElementById('console').innerText = `Cannot run files with the extension .${currentFile.split('.').pop()}`;
             }
-
-            document.getElementById('console').innerText = `Output:\n${output}`;
         }
 
         // Set the editor mode based on file extension
         function setEditorMode(ext) {
             let mode;
             switch (ext) {
-                case 'py':
-                    mode = 'python';
-                    break;
                 case 'js':
                     mode = 'javascript';
                     break;
                 case 'html':
                     mode = 'xml';
-                    break;
-                case 'css':
-                    mode = 'css';
-                    break;
-                case 'md':
-                    mode = 'markdown';
                     break;
                 default:
                     mode = 'null';
