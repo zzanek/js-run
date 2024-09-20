@@ -3,10 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Code Runner</title>
-    <!-- Import CodeMirror CSS -->
+    <title>Multi-File Code Runner</title>
+    <!-- CodeMirror CSS -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/codemirror.min.css">
-    <!-- Theme for CodeMirror -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/theme/monokai.min.css">
     <style>
         body {
@@ -23,13 +22,45 @@
         h1 {
             color: #61dafb;
         }
-        #editor {
+        #file-manager {
             width: 80%;
-            height: 300px;
-            border: 1px solid #ccc;
+            display: flex;
+            justify-content: space-between;
             margin-bottom: 10px;
         }
-        #run-button {
+        #file-list {
+            width: 20%;
+            background-color: #1e1e1e;
+            color: white;
+            padding: 10px;
+            border-radius: 5px;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        #file-list ul {
+            list-style: none;
+            padding: 0;
+        }
+        #file-list ul li {
+            padding: 5px;
+            cursor: pointer;
+            border-bottom: 1px solid #444;
+        }
+        #file-list ul li:hover {
+            background-color: #333;
+        }
+        #editor {
+            width: 75%;
+            height: 300px;
+            border: 1px solid #ccc;
+        }
+        #controls {
+            margin-top: 10px;
+            display: flex;
+            justify-content: space-between;
+            width: 80%;
+        }
+        #run-button, #create-file-button, #delete-file-button {
             background-color: #61dafb;
             border: none;
             padding: 10px 20px;
@@ -39,7 +70,7 @@
         }
         #console {
             width: 80%;
-            height: 200px;
+            height: 150px;
             background-color: #1e1e1e;
             color: #00ff00;
             padding: 10px;
@@ -51,17 +82,41 @@
     </style>
 </head>
 <body>
-    <h1>Code Runner</h1>
-    <textarea id="editor"></textarea>
-    <button id="run-button">Run Code</button>
+    <h1>Multi-File Code Runner</h1>
+
+    <!-- File Manager -->
+    <div id="file-manager">
+        <div id="file-list">
+            <h3>Files</h3>
+            <ul id="files"></ul>
+        </div>
+        <textarea id="editor"></textarea>
+    </div>
+
+    <!-- Control Buttons -->
+    <div id="controls">
+        <input type="text" id="new-file-name" placeholder="New file name (e.g., run.py)">
+        <button id="create-file-button">Create File</button>
+        <button id="delete-file-button">Delete File</button>
+        <button id="run-button">Run Code</button>
+    </div>
+
+    <!-- Console -->
     <div id="console"></div>
 
-    <!-- Import CodeMirror JS -->
+    <!-- CodeMirror JavaScript -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/codemirror.min.js"></script>
-    <!-- Import Python Mode for CodeMirror -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/mode/python/python.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/mode/javascript/javascript.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/mode/xml/xml.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/mode/css/css.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/mode/markdown/markdown.min.js"></script>
 
     <script>
+        // File management system
+        let files = {};
+        let currentFile = null;
+
         // Initialize the CodeMirror editor
         const editor = CodeMirror.fromTextArea(document.getElementById('editor'), {
             mode: 'python',
@@ -70,32 +125,113 @@
             indentUnit: 4,
         });
 
-        // Run Code Button Click Event
-        document.getElementById('run-button').addEventListener('click', function() {
-            const code = editor.getValue();
-            runPythonCode(code);
-        });
+        // Function to create a new file
+        function createFile(fileName) {
+            if (files[fileName]) {
+                alert('File already exists!');
+                return;
+            }
+            files[fileName] = '';
+            updateFileList();
+        }
 
-        // Mock function to run Python code
-        function runPythonCode(code) {
-            // Simulate running the code (Replace this with actual server-side code execution logic)
+        // Function to update the file list
+        function updateFileList() {
+            const fileList = document.getElementById('files');
+            fileList.innerHTML = '';
+            for (const file in files) {
+                const li = document.createElement('li');
+                li.textContent = file;
+                li.addEventListener('click', () => openFile(file));
+                fileList.appendChild(li);
+            }
+        }
+
+        // Function to open a file
+        function openFile(fileName) {
+            currentFile = fileName;
+            editor.setValue(files[fileName]);
+            const ext = fileName.split('.').pop();
+            setEditorMode(ext);
+        }
+
+        // Function to delete a file
+        function deleteFile(fileName) {
+            if (confirm('Are you sure you want to delete ' + fileName + '?')) {
+                delete files[fileName];
+                currentFile = null;
+                editor.setValue('');
+                updateFileList();
+            }
+        }
+
+        // Function to run the code (currently mocks execution)
+        function runCode() {
+            if (!currentFile) {
+                alert('Please select a file to run.');
+                return;
+            }
+            const code = editor.getValue();
+            files[currentFile] = code;
+
+            // Mock execution (replace this with actual server-side code execution)
             let output;
-            try {
-                // Dummy logic to simulate code output
-                if (code.includes('print')) {
-                    output = code.split('print(')[1].split(')')[0]; // Very basic mock parsing
-                } else if (code.includes('2 + 2')) {
-                    output = '4';
-                } else {
-                    output = 'Command not recognized.';
-                }
-            } catch (err) {
-                output = `Error: ${err.message}`;
+            if (currentFile.endsWith('.py')) {
+                output = `Running Python code from ${currentFile}:\n` + code;
+            } else if (currentFile.endsWith('.js')) {
+                output = `Running JavaScript code from ${currentFile}:\n` + code;
+            } else {
+                output = `Cannot run files with the extension .${currentFile.split('.').pop()}`;
             }
 
-            // Display output in the console
             document.getElementById('console').innerText = `Output:\n${output}`;
         }
+
+        // Set the editor mode based on file extension
+        function setEditorMode(ext) {
+            let mode;
+            switch (ext) {
+                case 'py':
+                    mode = 'python';
+                    break;
+                case 'js':
+                    mode = 'javascript';
+                    break;
+                case 'html':
+                    mode = 'xml';
+                    break;
+                case 'css':
+                    mode = 'css';
+                    break;
+                case 'md':
+                    mode = 'markdown';
+                    break;
+                default:
+                    mode = 'null';
+            }
+            editor.setOption('mode', mode);
+        }
+
+        // Event Listeners
+        document.getElementById('create-file-button').addEventListener('click', () => {
+            const fileName = document.getElementById('new-file-name').value;
+            if (fileName) {
+                createFile(fileName);
+                document.getElementById('new-file-name').value = '';
+            } else {
+                alert('Please enter a valid file name.');
+            }
+        });
+
+        document.getElementById('delete-file-button').addEventListener('click', () => {
+            if (currentFile) {
+                deleteFile(currentFile);
+            } else {
+                alert('Please select a file to delete.');
+            }
+        });
+
+        document.getElementById('run-button').addEventListener('click', runCode);
     </script>
 </body>
 </html>
